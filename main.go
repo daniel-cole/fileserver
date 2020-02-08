@@ -25,6 +25,8 @@ func main() {
 	var directory string
 	var htpasswdFile string
 	var logLevel string
+	var tlsKeyFile string
+	var tlsCertFile string
 
 	flag.IntVar(&port, "port", 9000, "port to listen on")
 	flag.StringVar(&address, "address", "0.0.0.0", "address to bind to")
@@ -32,6 +34,8 @@ func main() {
 	flag.StringVar(&directory, "directory", ".", "directory to serve files from")
 	flag.StringVar(&htpasswdFile, "htpasswdFile", "htpasswd", "htpasswd file to use for authenticating users")
 	flag.StringVar(&logLevel, "logLevel", "INFO", "set the log level [INFO|WARN|ERROR|DEBUG]")
+	flag.StringVar(&tlsCertFile, "tlsCertFile", "", "TLS certificate file to use. Must be specified with tlsKeyFile")
+	flag.StringVar(&tlsKeyFile, "tlsKeyFile", "", "TLS key to use. Must be specified with tlsCertFile")
 	flag.Parse()
 
 	parsedSourceRanges, err := util.ParseSourceRanges(sourceRanges)
@@ -42,6 +46,11 @@ func main() {
 	_, err = os.Stat(htpasswdFile)
 	if err != nil {
 		logrus.Fatalf("Unable to find htpasswd file '%s' %v", htpasswdFile, err)
+	}
+
+	if (tlsCertFile != "" && tlsKeyFile == "") || (tlsCertFile == "" && tlsKeyFile != "") {
+		logrus.Fatalf("Both tlsCertFile and tlsKeyFile must be specified. tlsCertFile: '%s', tlsKeyFile: '%s'",
+			tlsCertFile, tlsKeyFile)
 	}
 
 	setLogLevel(logLevel)
@@ -73,9 +82,9 @@ func main() {
 	authenticator := auth.NewBasicAuthenticator("", secret)
 
 	http.Handle("/", middleware.Logger(middleware.CheckSourceIP(
-		authenticator.Wrap(func(res http.ResponseWriter, req *auth.AuthenticatedRequest) {
-			middleware.LogWithContext(req.Context()).Infof("Processing request for user: %s", req.Username)
-			http.FileServer(http.Dir(directory)).ServeHTTP(res, &req.Request)
+		authenticator.Wrap(func(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
+			middleware.LogWithContext(r.Context()).Infof("Processing request for user: %s", r.Username)
+			http.FileServer(http.Dir(directory)).ServeHTTP(w, &r.Request)
 		}))))
 
 	server := http.Server{
@@ -106,8 +115,15 @@ func main() {
 	}()
 
 	logrus.Infof("File server is ready to handle requests at %s", listenAddress)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		logrus.Fatalf("Could not listen on %s: %v\n", listenAddress, err)
+
+	if tlsCertFile != "" && tlsKeyFile != "" { // TLS enabled
+		if err := server.ListenAndServeTLS(tlsCertFile, tlsKeyFile); err != nil && err != http.ErrServerClosed {
+			logrus.Fatalf("Could not listen on %s: %v\n", listenAddress, err)
+		}
+	} else {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logrus.Fatalf("Could not listen on %s: %v\n", listenAddress, err)
+		}
 	}
 
 	<-done
