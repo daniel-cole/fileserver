@@ -18,12 +18,12 @@ Motivation: It's raining outside, so why not.
 # Command Line Arguments
 | Argument        | Flag            | Description  | Default Value
 | -------------|:---------------------|:-----|:-----------|
-| port         | -commandfile   | Port to listen on | 9000
+| port         | -port          | Port to listen on | 9000
 | address      | -address       | Address to bind to | "0.0.0.0"
-| sourceRanges | -sourceRanges | CSV string of source ranges to allow access to the file server | "0.0.0.0/0,::/0"
+| sourceRanges | -sourceRanges  | CSV string of source ranges to allow access to the file server | "0.0.0.0/0,::/0"
 | directory    | -directory     | Root directory to serve files from | "."
 | htpasswdFile | -htpasswdFile  | htpasswd file to use for authenticating users | "htpasswd"
-| logLevel     | -logLevel     | Set the log level INFO,WARN,ERROR,DEBUG | INFO
+| logLevel     | -logLevel      | Set the log level INFO,WARN,ERROR,DEBUG | INFO
 | tlsCertFile  | -tlsCertFile   | TLS certificate file to use. Must be specified with tlsKeyFile | ""
 | tlsKeyFile   | -tlsKeyFile    | TLS key to use. Must be specified with tlsCertFile | ""
 
