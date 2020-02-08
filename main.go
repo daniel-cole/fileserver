@@ -19,6 +19,18 @@ import (
 var Version = "undefined"
 
 func main() {
+
+	var arg string
+
+	if len(os.Args) > 1 {
+		arg = os.Args[1]
+	}
+
+	if arg == "version" || arg == "-version" || arg == "--version" {
+		fmt.Println(Version)
+		os.Exit(0)
+	}
+
 	var port int
 	var address string
 	var sourceRanges string
