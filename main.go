@@ -24,12 +24,14 @@ func main() {
 	var sourceRanges string
 	var directory string
 	var htpasswdFile string
+	var logLevel string
 
 	flag.IntVar(&port, "port", 9000, "port to listen on")
 	flag.StringVar(&address, "address", "0.0.0.0", "address to bind to")
 	flag.StringVar(&sourceRanges, "sourceRanges", "0.0.0.0/0,::/0", "source addresses to allow connectivity from")
 	flag.StringVar(&directory, "directory", ".", "directory to serve files from")
 	flag.StringVar(&htpasswdFile, "htpasswdFile", "htpasswd", "htpasswd file to use for authenticating users")
+	flag.StringVar(&logLevel, "logLevel", "INFO", "set the log level [INFO|WARN|ERROR|DEBUG]")
 	flag.Parse()
 
 	parsedSourceRanges, err := util.ParseSourceRanges(sourceRanges)
@@ -41,6 +43,8 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("Unable to find htpasswd file '%s' %v", htpasswdFile, err)
 	}
+
+	setLogLevel(logLevel)
 
 	listenAddress := fmt.Sprintf("%s:%d", address, port)
 
